@@ -7,7 +7,7 @@ imagesCases/
 imagesFeuilles/
 poids_03_06_2024/
 poids_avec_C/
-#poids_cnn/
+poids_cnn/
 
 # Fichiers à ignorer
 *.txt
