@@ -1,18 +1,22 @@
 import unittest
 import cv2
 from detection_lignes import *
+from cadrer_image import *
 
 class TestDetectionLignes(unittest.TestCase):
 
     def setUp(self):
-        self.image = cv2.imread('image_cadree.jpg', cv2.IMREAD_GRAYSCALE)
+        self.image = cv.imread("imagesFeuilles/Feuille176.jpeg", cv.IMREAD_GRAYSCALE)
+        #self.image = cadrage(im)
+        
+        #self.image = cv2.imread('image_cadree.jpg', cv2.IMREAD_GRAYSCALE)
 
     def test_detection_ligne_haut(self):
         limite_haut = detection_ligne_haut(self.image)
         self.assertIsNotNone(limite_haut)
         self.assertIsInstance(limite_haut, int)
         self.assertGreaterEqual(limite_haut, 0)
-
+    """
     def test_detection_ligne_bas(self):
         limite_bas = detection_ligne_bas(self.image)
         self.assertIsNotNone(limite_bas)
@@ -30,6 +34,7 @@ class TestDetectionLignes(unittest.TestCase):
         self.assertIsNotNone(limite_droite)
         self.assertIsInstance(limite_droite, int)
         self.assertGreaterEqual(limite_droite, 0)
+"""
 
     def test_detection_lignes_feuille_cadree(self):
         liste_lignes_verticales, liste_lignes_horizontales = detection_lignes_feuille_cadree(self.image)

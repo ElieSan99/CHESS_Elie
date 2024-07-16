@@ -26,7 +26,7 @@ def detection_ligne_haut (image) :
     '''
     _,image_binarisee = cv.threshold(image, 85, 255, cv.THRESH_BINARY)
     #_,image_binarisee = cv.adaptiveThreshold(image, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY_INV,9,0)
-    #affiche_ecran(image_binarisee,'image binarisee ')
+    affiche_ecran(image_binarisee,'image binarisee ')
     #cv.waitKey(0)
     kernel = np.ones((10,10), np.uint8) # kernel (10,10) initialement
     # on ne veut garder que des blocs noirs correspondant aux mots "noirs"
@@ -69,7 +69,7 @@ def detection_ligne_bas(image) :
     limite_bas(int) --> Indice de la premiere ligne detectee en partant de la fin.
     '''
     imb = cv.adaptiveThreshold(image, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,55,1)
-    affiche_ecran(imb, 'image binarisee 2')
+    #affiche_ecran(imb, 'image binarisee 2')
     limite_bas = -1
     hauteur_image = image.shape[0]
     print(f"hauteur de l'image {hauteur_image}")
@@ -103,6 +103,8 @@ def detection_ligne_gauche(image) :
     limite_bas(int) --> Indice de la premiere ligne detectee, en partant de la fin pour
     être du côté gauche (cela est dû à la transposition).
     '''
+    # Initialiser la limite_gauche avec une valeur par défaut
+    limite_gauche = -1
     image_bin = cv.threshold(image,80,255, cv.THRESH_BINARY)[1]
     largeur_image = image.shape[1]
     for i in range (largeur_image-1,0,-1):
@@ -134,6 +136,10 @@ def detection_ligne_droite(image) :
     Retourne :
     limite_bas(int) --> Indice de la premiere ligne detectee en partant de la fin.
     '''
+
+    # Initialiser la limite_droite avec une valeur par défaut
+    limite_droite = -1
+
     _, image_bin = cv.threshold(image,80,255, cv.THRESH_BINARY)
     largeur_image = image.shape[1]
     for i in range (largeur_image):
@@ -162,12 +168,22 @@ def detection_lignes_feuille_cadree(image) :
     '''
 
     largeur_image = image.shape[1]
-
+    print(f"image largeur : {largeur_image}")
     image_contour = cv.Canny(image, 20, 200, None, 3)
+    #affiche_ecran(image_contour, 'image contour')
     kernel = np.ones((3,3), np.uint8)
     image_contour = cv.dilate(image_contour, kernel, iterations=1)
+    #affiche_ecran(image_contour, 'image contour apres dilatation')
+    lignes_verticales = cv.HoughLinesP(image_contour, 1, np.pi / 180, 350, None, 300, 4)
 
-    lignes_verticales = cv.HoughLinesP(image_contour, 1, np.pi / 180, 350, None, 500, 4)
+    """if lignes_verticales is not None:
+        for ligne in lignes_verticales:
+            for x1, y1, x2, y2 in ligne:
+                cv.line(image, (x1, y1), (x2, y2), (255, 255, 255), 5) 
+"""
+    
+    
+    
 
     #print(f"lignes verticales {lignes_verticales}")
 
@@ -176,16 +192,24 @@ def detection_lignes_feuille_cadree(image) :
     
     #print(f"lignes horizontales {lignes_horizontales}")
 
-    liste_lignes = [[], []]
+    """if lignes_horizontales is not None:
+        for ligne in lignes_horizontales:
+            for x1, y1, x2, y2 in ligne:
+                cv.line(image, (x1, y1), (x2, y2), (255, 255, 255), 5) """
 
+    # Afficher l'image avec les lignes détectées
+    #affiche_ecran(image,'Image avec lignes')
+
+    liste_lignes = [[], []]
+    seuil = 60
     for points in lignes_verticales :
         x_1, x_2 = points[0][0], points[0][2]
-        if abs(x_1 - x_2) < 60:
+        if abs(x_1 - x_2) < seuil:
             liste_lignes[0].append(int((x_1 + x_2)/2))
 
     for points in lignes_horizontales :
         y_1, y_2 = points[0][1], points[0][3]
-        if abs(y_1 - y_2) < 60:
+        if abs(y_1 - y_2) < seuil:
             liste_lignes[1].append(int((y_1 + y_2)/2))
     
     print("Lignes verticales détectées:", liste_lignes[0])
@@ -213,12 +237,16 @@ def supression_lignes_successives(liste_lignes) :
     comprenant les indices des lignes horizontales détectées.
     '''
     liste_lignes[0].sort(), liste_lignes[1].sort()
+    #print("Lignes verticales triées:", liste_lignes[0])
+    #print("Lignes horizontales triées:", liste_lignes[1])
     liste_lignes_triee_v = []
     liste_lignes_triee_h = []
     prec_ind = [liste_lignes[0][0]]
 
+    seuil = 15
+
     for index in liste_lignes[0][1:] :
-        if index - prec_ind[-1] > 15 :
+        if index - prec_ind[-1] > seuil :
             liste_lignes_triee_v.append(int(np.mean(prec_ind)))
             prec_ind = [index]
         else :
@@ -228,7 +256,7 @@ def supression_lignes_successives(liste_lignes) :
     prec_ind = [liste_lignes[1][0]]
 
     for index in liste_lignes[1][1:] :
-        if index - prec_ind[-1] > 15 :
+        if index - prec_ind[-1] > seuil :
             liste_lignes_triee_h.append(int(np.mean(prec_ind)))
             prec_ind = [index]
         else :
