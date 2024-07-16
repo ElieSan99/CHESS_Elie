@@ -287,7 +287,7 @@ def retranscrire_caractere3(dict_caractere_joueur, jeu):
         print(f"Tentative de correction {nb_correction + 1}: {coup_corrige}")
         
         if coup_corrige in coups_possibles:
-            coup_corrige,_ = validation_user(coup_corrige)
+            coup_corrige = validation_user(coup_corrige)
             jeu.push_san(coup_corrige)
             return conversion_piece_inverse(coup_corrige)
         
