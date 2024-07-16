@@ -1,13 +1,18 @@
 # Dossiers à ignorer
 __pycache__/
 dataset/
+
 #new_dataset/
+=======
+new_dataset/
 doc/
 imagesCases/
 imagesFeuilles/
 poids_03_06_2024/
 poids_avec_C/
+
 #poids_cnn/
+
 # Fichiers à ignorer
 *.txt
 *.jpg
