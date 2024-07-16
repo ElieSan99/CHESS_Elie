@@ -4,9 +4,9 @@ dataset/
 doc/
 imagesCases/
 imagesFeuilles/
-poids_O3_06_2024:
+poids_03_06_2024/
 poids_avec_C/
 
-# fichiers à ignorer
+# Fichiers à ignorer
 *.txt
 *.jpg
