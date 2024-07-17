@@ -17,3 +17,6 @@ poids_avec_C/
 *.txt
 *.jpg
 *.png
+!Feuille_176_verite_terrain.txt
+!IMG_0177_verite_terrain.txt
+!IMG20231107104606_verite_terrain.txt

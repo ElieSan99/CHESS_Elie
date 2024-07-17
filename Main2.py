@@ -17,7 +17,7 @@ def affiche_ecran(image, titre):
 
 #Choisir l'image à traiter
 ##########################
-image_feuille = cv.imread("imagesFeuilles/Feuille176.jpeg", cv.IMREAD_GRAYSCALE) # 23.jpg
+image_feuille = cv.imread("imagesFeuilles/IMG_0177.jpeg", cv.IMREAD_GRAYSCALE) # 23.jpg
 print("taille de l'image :", image_feuille.shape)
 im0 = cv.resize(image_feuille,(600,1800))
 # Afficher l'image originale
@@ -103,7 +103,7 @@ print("caractère reconnu ", retranscrire_caractere(im[0]))
 #On récupère ici les caractères détectés par le réseau de neurones, dans liste_coups.
 liste_coups =[]
 
-"""for i in range(1,69) :
+"""for i in range(1,66) :
     #coups = f"{i}. "
     coup1 = ""
     if dict_case_caracteres[i][0] != "vide" :
@@ -152,7 +152,7 @@ cv.destroyAllWindows()"""
 
 # test avec retranscrire_caractere2
 jeu = chess.Board()
-for i in range(1,69) :
+for i in range(1,66) :
    coup1 = retranscrire_caractere3(dict_case_caracteres[i][0], jeu)
    coup2 = retranscrire_caractere3(dict_case_caracteres[i][1], jeu)
    coups = f"{i}. " + coup1 + " " + coup2

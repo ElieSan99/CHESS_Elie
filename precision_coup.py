@@ -31,5 +31,5 @@ def precision(liste_coups_generes_txt, liste_coups_corrects_txt):
     return taux_bonnes_predictions
 
 
-taux = precision('Liste_coups2.txt', 'Liste_coups_corrects.txt')
+taux = precision('Liste_coups2.txt', 'IMG_0177_verite_terrain.txt')
 print(f"Taux de bonnes prédictions : {taux:.0f}%")

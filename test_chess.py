@@ -112,9 +112,9 @@ def generer_liste_coups_txt(coups_corriges, fichier_sortie):
 #coups_transformes = transformation_coups(coups)
 #print(coups_transformes)
 
-coups = lire_liste_coups('Liste_coups_corrects.txt')
+"""coups = lire_liste_coups('Liste_coups_corrects.txt')
 print(coups)
-coups_corriges = tester_coups(coups)
+coups_corriges = tester_coups(coups)"""
 
 #generer_liste_coups_txt(coups_corriges, 'Liste_coups_corriges.txt')
 
