@@ -2,7 +2,7 @@ import cv2 as cv
 from cadrer_image import cadrage, cadrage2
 from detection_lignes import detection_lignes_feuille_cadree
 from recuperation_cases import fourier, decoupage_case, create_dict, isolement_caracteres
-from retranscrire_caracteres import retranscrire_caractere, retranscrire_caractere2, retranscrire_caractere3
+from retranscrire_caracteres import retranscrire_caractere, retranscrire_caractere2
 import numpy as np
 import matplotlib.pyplot as plt
 from test_chess import transformation_coups_en_liste, transformation_coups_en_txt, tester_coups
@@ -17,7 +17,7 @@ def affiche_ecran(image, titre):
 
 #Choisir l'image à traiter
 ##########################
-image_feuille = cv.imread("imagesFeuilles/IMG20231107104546.jpg", cv.IMREAD_GRAYSCALE) # 23.jpg
+image_feuille = cv.imread("imagesFeuilles/Feuille176.jpeg", cv.IMREAD_GRAYSCALE) # 23.jpg
 print("taille de l'image :", image_feuille.shape)
 im0 = cv.resize(image_feuille,(600,1800))
 # Afficher l'image originale
@@ -26,7 +26,7 @@ im0 = cv.resize(image_feuille,(600,1800))
 
 # Cadrer l'image
 image_cadree = cadrage2(image_feuille)
-#affiche_ecran(image_cadree, 'image cadree')
+affiche_ecran(image_cadree, 'image cadree')
 
 # Appliquer la transformée de Fourier
 lignes_detectees = detection_lignes_feuille_cadree(image_cadree)
@@ -103,7 +103,7 @@ print("caractère reconnu ", retranscrire_caractere(im[0]))
 #On récupère ici les caractères détectés par le réseau de neurones, dans liste_coups.
 liste_coups =[]
 
-for i in range(1,30) :
+"""for i in range(1,69) :
     #coups = f"{i}. "
     coup1 = ""
     coup2 = ""
@@ -149,13 +149,13 @@ for i in range(1,30) :
 
 #print(liste_coups)
 # closing all open windows 
-cv.destroyAllWindows()
+cv.destroyAllWindows()"""
 
 # test avec retranscrire_caractere2
-"""jeu = chess.Board()
-for i in range(1,66) :
-   coup1 = retranscrire_caractere3(dict_case_caracteres[i][0], jeu)
-   coup2 = retranscrire_caractere3(dict_case_caracteres[i][1], jeu)
+jeu = chess.Board()
+for i in range(1,69) :
+   coup1 = retranscrire_caractere2(dict_case_caracteres[i][0], jeu)
+   coup2 = retranscrire_caractere2(dict_case_caracteres[i][1], jeu)
    coups = f"{i}. " + coup1 + " " + coup2
    liste_coups.append(coups)
 
@@ -167,4 +167,4 @@ for i in range(1,66) :
 
 
 # closing all open windows 
-cv.destroyAllWindows()"""
+cv.destroyAllWindows()
