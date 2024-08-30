@@ -6,6 +6,7 @@ import chess
 import chess.pgn
 import difflib
 from test_chess import conversion_piece, conversion_piece_inverse
+import Levenshtein
 
 #list_caract = ["a","b","C","5","cmin","D","2","#","dmin","e","=","F","fmin","g","h","8","o","+","4","R","7","6","T","-","3","1","x"]
 
@@ -65,6 +66,11 @@ conversion = {'egal':'=',
            'tiret':'-',
            'o':'o'}
 
+
+total_coups_suggeres = 0
+
+
+
 def get_key_from_value(dico, valeur):
     """
     Retourne la première clé associée à une valeur spécifique dans le dictionnaire.
@@ -81,6 +87,11 @@ def get_key_from_value(dico, valeur):
         if val == valeur:
             return cle
     return None  # Retourne None si aucune clé n'est trouvée pour la valeur donnée
+
+
+import re
+
+
 
 
 size = 128
@@ -121,180 +132,73 @@ def retranscrire_caractere(caractere) :
     return '?'
 
 
-#### A voir 
+# Classe pour permettre une intervention de l'utilisateur pour la correction des coups
+class InteractionUser:
+    def __init__(self):
+        self.interventions_utilisateur = 0
 
-
-def retranscrire_caractere2(dict_caractere_joueur, jeu):
-    '''
-    Cette fonction permet de redimensionner et prétraiter l'image,
-    puis de calculer quel caractère est présent.
-    
-    Paramètres :
-    dict_caractere_joueur (dict) : Dictionnaire contenant les caractères à prédire sous forme d'images.
-    jeu (chess.Board) : Instance de l'échiquier pour vérifier la légalité des coups.
-    
-    Retourne :
-    coup_corrige (str) : Chaîne représentant les caractères détectés et convertis en coup, corrigé si nécessaire.
-    '''
-
-    def obtenir_top_prediction(res, n=5):
-        """Retourne les indices des n prédictions avec les probas les plus élévées."""
-        indices = np.argsort(res)[0][-n:]
-        print(f"indices {indices}")
-        return indices
-    
-    def validation_user(coup):
-        """Retourne le coup validé par l'utilisateur"""
-
-        validation = input('Le coup est il correct ? (Y/N): ').strip().lower()
-        if validation=='y':
-            coup_valide = coup
-        else:
-            coup_valide = str(input('Saisir le coup correct: ').strip())
-            coup_valide = conversion_piece(coup_valide)
-
-        return coup_valide
-
-    coup = ""
-    top_predictions = []
-
-    for caractere in dict_caractere_joueur:
-
-        # Afficher le car
-        #cv.imshow('car', caractere)
-        #cv.waitKey(0)
-        # Redimensionner et prétraiter l'image
-        image_to_predict = np.expand_dims(cv.resize(caractere, img_size), axis=0) / 255.0
-        res = model.predict(image_to_predict)
-
-        print(f"probas {res}")
-
-        # Obtenir les trois meilleures prédictions
-        top_preds = obtenir_top_prediction(res)
-        top_predictions.append(top_preds)
-
-        # Utiliser la meilleure prédiction pour le coup initial
-        top_prediction = next(cle for cle, valeur in classes.items() if valeur == top_preds[-1])
-        coup += conversion[top_prediction]
-
-    print(f"top prediction {top_predictions}")
-    print(f"coup initial prédit: {coup}")
-
-    if len(coup) != 2:
-        # Conversion en notation anglaise
-        coup = conversion_piece(coup)
-    else:
-        # Remplacer tout coup contenant "o" par "o-o"
-        if 'o' in coup:
-            coup = "O-O"
-        
-        coup = coup.lower()
-        print(f"coup minuscule : {coup}")
-
-    
-    
-
-    # Liste des coups possibles
-    coups_possibles = list(map(jeu.san, jeu.legal_moves))
-
-    print(f"coups possibles: {coups_possibles}")
-
-    coup_corrige = coup
-    nb_correction = 0
-    max_tentatives = 5  # Maximum de tentatives de correction
-
-    # Trouver le coup le plus similaire parmi les coups possibles 
-    similarites = [(difflib.SequenceMatcher(None, coup_corrige, coup2).ratio(), coup2) for coup2 in coups_possibles]
-    similarites.sort(reverse=True, key=lambda x: x[0])
-    coup_suggere = similarites[0][1] if similarites else coup_corrige
-
-    # Trouver le coup légal le plus proche basé sur la distance d'édition
-    #coup_suggere = difflib.get_close_matches(coup_corrige, coups_possibles, n=1)
-    #coup_suggere = coup_suggere[0]
-    print(f"coup le plus proche basé sur la distance d'édition : {coup_suggere}")
-
-    while nb_correction < max_tentatives:
-        print(f"Tentative de correction {nb_correction + 1}: {conversion_piece_inverse(coup_corrige)}")
-        
-        if coup_corrige in coups_possibles:
-            #coup_corrige = validation_user(coup_corrige)
-            jeu.push_san(coup_corrige)
-            return conversion_piece_inverse(coup_corrige)
-        
-        # Sinon
-        print(f"coup suggéré : {conversion_piece_inverse(coup_suggere)}")
-        # Trouver et corriger le caractère différent
-        for i, (char1, char2) in enumerate(zip(coup_corrige, coup_suggere)):
-            if char1 != char2:
-                print(f"char1 {char1}")
-                # Utiliser la prochaine meilleure prédiction pour le caractère différent
-                if char1.isupper():
-                    cle1 = get_key_from_value(conversion,char1)
-                else:
-                    cle1 = get_key_from_value(conversion,conversion_piece_inverse(char1))
-
-                print(f"cle1 {cle1}")
-
-                if cle1 is None:
-                    # Demander la validation de l'utilisateur si cle1 est None
-                    coup_suggere = validation_user(coup_suggere)
-                    jeu.push_san(coup_suggere)
-                    return conversion_piece_inverse(coup_suggere)
-                
-                current_best_index = np.where(top_predictions[i] == classes[cle1])[0][0]
-                next_best_index = current_best_index - 1  # Prédiction suivante la plus probable
-                if next_best_index >= 0:
-                    next_best_prediction = next(cle for cle, valeur in classes.items() if valeur == top_predictions[i][next_best_index])
-                    coup_corrige = coup_corrige[:i] + conversion[next_best_prediction] + coup_corrige[i+1:]
-                break  # Sortir de la boucle une fois le caractère corrigé
-
-        nb_correction += 1
-
-    # Si aucune correction n'a fonctionné, retourner le coup suggéré
-    coup_suggere = validation_user(coup_suggere)
-    jeu.push_san(coup_suggere)
-    return conversion_piece_inverse(coup_suggere)
-
-
-
-
-def retranscrire_caractere3(dict_caractere_joueur, jeu):
-    '''
-    Cette fonction permet de redimensionner et prétraiter l'image,
-    puis de calculer quel caractère est présent.
-    
-    Paramètres :
-    dict_caractere_joueur (dict) : Dictionnaire contenant les caractères à prédire sous forme d'images.
-    jeu (chess.Board) : Instance de l'échiquier pour vérifier la légalité des coups.
-    
-    Retourne :
-    coup_corrige (str) : Chaîne représentant les caractères détectés et convertis en coup, corrigé si nécessaire.
-    '''
-
-    def obtenir_top_prediction(res, n=5):
-        """Retourne les indices des n prédictions avec les probas les plus élévées."""
-        indices = np.argsort(res)[0][-n:]
-        print(f"indices {indices}")
-        return indices
-    
-    def validation_user(coup):
-        """Retourne le coup validé par l'utilisateur"""
+    def validation_user(self, coup):
         validation = input('Le coup est-il correct ? (Y/N): ').strip().lower()
         if validation == 'y':
             coup_valide = coup
         else:
             coup_valide = str(input('Saisir le coup correct: ').strip())
             coup_valide = conversion_piece(coup_valide)
+            self.interventions_utilisateur += 1
         return coup_valide
+
+    def get_interventions(self):
+        return self.interventions_utilisateur
+
+# Déclaration de variable pour le calcul de taux d'intervention
+coup_traite_correct = 0
+total_coups_traites = 0
+
+def post_traitement(dict_caractere_joueur, jeu, intervention):
+    '''
+    Cette fonction permet d'effectuer un post-traitement des coups
+    initialement prédits.
+    
+    Paramètres :
+    dict_caractere_joueur (dict) : Dictionnaire contenant les caractères à prédire sous forme d'images.
+    jeu (chess.Board) : Instance de l'échiquier pour vérifier la légalité des coups.
+    intervention (InteractionUser): Instance de la classe InteractionUser qui permet une intervention de l'utilisateur
+                                    pour la correction des coups.
+    
+    Retourne :
+    coup_corrige (str) : Chaîne représentant les caractères détectés et convertis en coup, corrigé si nécessaire.
+    '''
+
+    global coup_traite_correct, total_coups_traites
+
+    def obtenir_top_prediction(res, n=5):
+        """Retourne les indices des n prédictions avec les probas les plus élévées."""
+        indices = np.argsort(res)[0][-n:]
+        print(f"indices {indices}")
+        return indices
+    
 
     coup = ""
     top_predictions = []
 
     for caractere in dict_caractere_joueur:
-        # Redimensionner et prétraiter l'image
-        image_to_predict = np.expand_dims(cv.resize(caractere, img_size), axis=0) / 255.0
+        if caractere is None:
+            print("Erreur : caractère non défini.")
+            return None
+
+        if not isinstance(caractere, np.ndarray):
+            print("Erreur : le caractère n'est pas une image valide.")
+            return None
+
+        try:
+            # Redimensionner et prétraiter l'image
+            image_to_predict = np.expand_dims(cv.resize(caractere, img_size), axis=0) / 255.0
+        except cv.error as e:
+            print(f"Erreur lors du redimensionnement de l'image: {e}")
+            return None
+
         res = model.predict(image_to_predict)
-        print(f"probas {res}")
+        #print(f"probas {res}")
 
         # Obtenir les trois meilleures prédictions
         top_preds = obtenir_top_prediction(res)
@@ -304,7 +208,7 @@ def retranscrire_caractere3(dict_caractere_joueur, jeu):
         top_prediction = next(cle for cle, valeur in classes.items() if valeur == top_preds[-1])
         coup += conversion[top_prediction]
 
-    print(f"top prediction {top_predictions}")
+    #print(f"top prediction {top_predictions}")
     print(f"coup initial prédit: {coup}")
 
     if len(coup) != 2:
@@ -316,17 +220,21 @@ def retranscrire_caractere3(dict_caractere_joueur, jeu):
         # Remplacer tout coup contenant "o" par "o-o"
         if 'o' in coup:
             coup = "O-O"
+            coup_traite_correct +=1
+            total_coups_traites +=1
         
         
 
 
      # Trouver la Liste des coups possibles
     coups_possibles = list(map(jeu.san, jeu.legal_moves))
-    print(f"coups possibles: {coups_possibles}")
+    print(f"coups possibles: {list(map(conversion_piece_inverse,coups_possibles))}")
+    
     
 
     # Vérifier si le coup prédit est parmi les coups possibles
     if coup in coups_possibles:
+        #coup_valide = intervention.validation_user(coup)
         jeu.push_san(coup)
         return conversion_piece_inverse(coup)
     
@@ -342,24 +250,51 @@ def retranscrire_caractere3(dict_caractere_joueur, jeu):
                 candidat = coup[:i] + conversion[cle] + coup[i+1:]
                 candidats.append(conversion_piece(candidat))
     
-    print(f"candidats: {candidats}")
+    print(f"candidats: {list(map(conversion_piece_inverse,candidats))}")
 
-    # Comparer les candidats avec les coups possibles et retenir le meilleur coup
-    similarites = [(difflib.SequenceMatcher(None, candidat, coup2).ratio(), coup2) for candidat in candidats for coup2 in coups_possibles]
+    # Calcul de la similarité basée sur la distance de Levenshtein
+    similarites = []
+    for candidat in candidats:
+        for coup2 in coups_possibles:
+            # Calcul de la distance de Levenshtein
+            distance = Levenshtein.distance(candidat, coup2)
+            # Calcul de la similarité (la distance inversée)
+            max_len = max(len(candidat), len(coup2))
+            similarity = 1 - (distance / max_len)
+            similarites.append((similarity, coup2))
+
+    # Tri des similarités en ordre décroissant
     similarites.sort(reverse=True, key=lambda x: x[0])
-    coup_suggere = similarites[0][1] if similarites else coup
 
-    print(f"coup le plus proche basé sur la distance d'édition : {coup_suggere}")
+    # Sélection du coup suggéré
+    similarite, coup_suggere = similarites[0] if similarites else None
 
-    #if coup_suggere in coups_possibles:
-        #jeu.push_san(coup_suggere)
-        #return conversion_piece_inverse(coup_suggere)
-
-    # demander la validation de l'utilisateur pour le coup suggéré
-    coup_valide = validation_user(coup_suggere)
+    print(f"coup suggéré : {conversion_piece_inverse(coup_suggere)}")
+    #print(f"similarité : {similarite}")
+    total_coups_traites +=1
+    
+    # Demander la validation de l'utilisateur pour le coup suggéré
+    coup_valide = intervention.validation_user(coup_suggere)
+    if coup_valide == coup_suggere:
+        coup_traite_correct +=1
     if coup_valide in coups_possibles:
         jeu.push_san(coup_valide)
         return conversion_piece_inverse(coup_valide)
-    
-    jeu.push_san(coup_suggere)
-    return conversion_piece_inverse(coup_suggere)
+
+    # Retourner None si aucun coup valide n'est trouvé
+    return None
+
+
+# Calcul de la proportion des coups suggérés corrects
+def proportion_coups_traite_correct():
+    if total_coups_traites > 0:
+        print(f"coups traités corrects : {coup_traite_correct}")
+        print(f"coups totaux traités {total_coups_traites}")
+        proportion = (coup_traite_correct / total_coups_traites) * 100
+        return proportion
+    else:
+        return 0
+
+
+
+

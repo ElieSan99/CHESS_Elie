@@ -13,7 +13,7 @@ from keras.optimizers import Adam
 import tensorflow as tf
 from keras.callbacks import ReduceLROnPlateau  # Importez le callback ReduceLROnPlateau
 from keras.callbacks import EarlyStopping
-from sklearn.metrics import confusion_matrix, precision_score, recall_score
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -121,12 +121,14 @@ plt.plot(history.history['accuracy'])
 plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
+plt.savefig('precision.png', dpi=300)
 plt.show()
 
 plt.plot(history.history['loss'])
 plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
+plt.savefig('loss.png', dpi=300)
 plt.show()
 
 print("\nScores sur la base de test")
@@ -181,14 +183,14 @@ y_true = test_set.classes
 
 # Calculer la matrice de confusion
 confusion_mtx = confusion_matrix(y_true, y_pred_classes)
-
-# Calculer la précision et le rappel
+"""
+"""# Calculer la précision et le rappel
 precision = precision_score(y_true, y_pred_classes, average='weighted')
 recall = recall_score(y_true, y_pred_classes, average='weighted')
+f1 = f1_score(y_true, y_pred_classes, average='weighted')
 
 print("Matrice de confusion :")
 print(confusion_mtx)
 print("Précision :", precision)
 print("Rappel :", recall)
-
-"""
+print("F1 :" , f1)"""

@@ -209,7 +209,7 @@ def isolement_caracteres(liste_cases) :
         
         #cv.imshow('case', case)
         #cv.waitKey(0)
-        #cv.imwrite('case.jpg', case)
+    
         caracteres_case = []
         case_inv = cv.bitwise_not(case)
         contours, _ = cv.findContours(case_inv, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -240,6 +240,120 @@ def isolement_caracteres(liste_cases) :
 
         #print(len(liste_caracteres_par_image))
     return liste_caracteres_par_image
+
+
+
+def isolement_carac_mser(liste_cases) :
+
+    desired_size = (128, 128) # le RN prend des images 128x128 et il était écrit 64x64 !!
+    margin = 25 
+    # Charger l'image en niveaux de gris
+    #case = cv.imread('C:/Users/elie.sanon/Documents/Stage_M1/CHESS_Elie/case10.jpg', cv.IMREAD_GRAYSCALE)
+    liste_caracteres_par_image = []
+    for case in liste_cases:
+        # conversion en niveaux de gris
+        absInv = np.abs(case) 
+        gris = absInv.astype(np.uint8) 
+        # Binarisation avec la méthode d'OTSU
+        _, case = cv.threshold(gris, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        #cv.imshow('case binarisee', case)
+        #cv.waitKey(0)
+
+        ############################
+        #### supprimer les lignes horizontales detectées
+
+        # Inverser les couleurs pour que les caractères soient blancs sur fond noir
+        binary_image_inv = cv.bitwise_not(case)
+        #cv.imshow('case avec couleur inversee', binary_image_inv)
+        #cv.waitKey(0)
+
+        # Utiliser des opérations morphologiques pour détecter les lignes horizontales
+        horizontal_kernel = cv.getStructuringElement(cv.MORPH_RECT, (25, 1))
+        detected_lines = cv.morphologyEx(binary_image_inv, cv.MORPH_OPEN, horizontal_kernel, iterations=2)
+        #cv.imshow('ligne detectee', detected_lines)
+        #cv.waitKey(0)
+
+        # Inverser les couleurs des lignes détectées
+        detected_lines_inv = cv.bitwise_not(detected_lines)
+        #cv.imshow('ligne detectee avec couleur inversee', detected_lines_inv)
+        #cv.waitKey(0)
+
+        # Supprimer les lignes horizontales détectées de l'image binaire
+        image_without_lines = cv.bitwise_and(binary_image_inv, detected_lines_inv)
+        #cv.imshow('case avec ligne supprimee', image_without_lines)
+        #cv.waitKey(0)
+
+        # Définir différents seuils et noyaux
+        seuil1 = 2
+        seuil2 = 3
+        seuil3 = 2
+        kernel1 = cv.getStructuringElement(cv.MORPH_RECT, (seuil1, seuil1))
+        kernel2 = cv.getStructuringElement(cv.MORPH_RECT, (seuil2, seuil2))
+        kernel3 = cv.getStructuringElement(cv.MORPH_RECT, (seuil3, seuil3))
+        
+        # Appliquer une dilatation pour combler les discontinuités
+    
+        dilated = cv.dilate(image_without_lines, kernel1, iterations=1)
+
+        # Appliquer une fermeture pour combler davantage les discontinuités et les trous
+        closed = cv.morphologyEx(dilated, cv.MORPH_CLOSE, kernel2)
+
+        # Appliquer une érosion
+        eroded = cv.erode(closed, kernel3, iterations=2)
+
+
+        # Inverser les couleurs pour revenir à l'image en niveaux de gris avec écriture noire sur fond blanc
+        case = cv.bitwise_not(eroded)
+
+        # Appliquer un filtre Gaussien pour lisser l'image
+        #blurred = cv.GaussianBlur(case, (5, 5), 0)
+
+        # Utiliser l'algorithme de Canny pour détecter les bords
+        #edges = cv.Canny(case, 100, 200)
+
+        # Détecter les régions MSER
+        mser = cv.MSER_create()
+        mser.setDelta(10)
+        mser.setMinArea(40)
+        mser.setMaxArea(400)
+        mser.setMaxVariation(1)
+
+        regions, _ = mser.detectRegions(case)
+
+        # Créer une image pour visualiser les régions détectées
+        #output = cv.cvtColor(case, cv.COLOR_GRAY2BGR)
+
+
+        # Liste pour stocker les images des caractères découpés
+        #caractere_images = []
+        caracteres_case = []
+        # Boucle sur les régions détectées
+        for region in regions:
+            # Calculer le contour convexe de la région
+            convex_hull = cv.convexHull(region.reshape(-1, 1, 2))
+            
+            # Calculer le rectangle englobant de la région convexe
+            x, y, w, h = cv.boundingRect(convex_hull)
+            
+            # Découper la région de l'image originale
+            caractere_image = case[y:y + h, x:x + w]
+
+            # Créer une image blanche pour ajouter la marge
+            larger_contour_image = np.ones((h + 2 * margin, w + 2 * margin), dtype=np.uint8) * 255
+            larger_contour_image[margin:margin + h, margin:margin + w] = caractere_image
+                
+                # Redimensionner l'image avec marge ajoutée
+            resized_image = cv.resize(larger_contour_image, desired_size)
+            caracteres_case.append(resized_image)
+
+        if len( caracteres_case) == 0:
+            liste_caracteres_par_image.append("vide")
+        else :
+            liste_caracteres_par_image.append(caracteres_case)
+        
+
+    return liste_caracteres_par_image
+
 
 
 def create_dict(liste_cases) :

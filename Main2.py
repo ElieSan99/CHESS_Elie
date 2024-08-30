@@ -2,12 +2,13 @@ import cv2 as cv
 from cadrer_image import cadrage, cadrage2
 from detection_lignes import detection_lignes_feuille_cadree
 from recuperation_cases import fourier, decoupage_case, create_dict, isolement_caracteres
-from retranscrire_caracteres import retranscrire_caractere, retranscrire_caractere2, retranscrire_caractere3
+from retranscrire_caracteres import retranscrire_caractere, post_traitement, proportion_coups_traite_correct, InteractionUser
 import numpy as np
 import matplotlib.pyplot as plt
 from test_chess import transformation_coups_en_liste, transformation_coups_en_txt, tester_coups
 import chess
 import chess.pgn
+
 
 
 def affiche_ecran(image, titre):
@@ -17,7 +18,7 @@ def affiche_ecran(image, titre):
 
 #Choisir l'image à traiter
 ##########################
-image_feuille = cv.imread("imagesFeuilles/IMG20231107104546.jpg", cv.IMREAD_GRAYSCALE) # 23.jpg
+image_feuille = cv.imread("imagesFeuilles/Feuille176.jpeg", cv.IMREAD_GRAYSCALE) # 23.jpg
 print("taille de l'image :", image_feuille.shape)
 im0 = cv.resize(image_feuille,(600,1800))
 # Afficher l'image originale
@@ -26,7 +27,7 @@ im0 = cv.resize(image_feuille,(600,1800))
 
 # Cadrer l'image
 image_cadree = cadrage2(image_feuille)
-affiche_ecran(image_cadree, 'image cadree')
+#affiche_ecran(image_cadree, 'image cadree')
 
 # Appliquer la transformée de Fourier
 lignes_detectees = detection_lignes_feuille_cadree(image_cadree)
@@ -108,9 +109,13 @@ liste_coups =[]
     coup1 = ""
     coup2 = ""
     if dict_case_caracteres[i][0] != "vide" :
+        #n = 0
         for caractere in dict_case_caracteres[i][0] :
+            #n+=1
+            #car = 'car'+str(n)+'.jpg'
             #cv.imshow('car', caractere)
             #cv.waitKey(0)
+            #cv.imwrite(car,caractere)
             #nom_fichier = f'caractere_degrade/car_{caractere_count}.jpg'
             #cv.imwrite(nom_fichier, caractere)
             car = retranscrire_caractere(caractere)
@@ -152,19 +157,54 @@ liste_coups =[]
 cv.destroyAllWindows()"""
 
 # test avec retranscrire_caractere2
+total_coups = 0  # Compteur pour le nombre total de coups
+intervention = InteractionUser()
 jeu = chess.Board()
-for i in range(1,66) :
-   coup1 = retranscrire_caractere3(dict_case_caracteres[i][0], jeu)
-   coup2 = retranscrire_caractere3(dict_case_caracteres[i][1], jeu)
-   coups = f"{i}. " + coup1 + " " + coup2
-   liste_coups.append(coups)
+for i in range(1, 13):
+    print(f"Ligne {i} : coup 1")
+    coup1 = post_traitement(dict_case_caracteres[i][0], jeu, intervention)
+    #coup1 = postraitement_sans_user(dict_case_caracteres[i][0], jeu)
+    
+    if coup1 is None:
+        print(f"Fin du programme : coup1 vide à la ligne {i}")
+        break
 
-   with open('Liste_coups2_.txt', 'w') as fichier:
+    print(f"Ligne {i} : coup 2")
+    coup2 = post_traitement(dict_case_caracteres[i][1], jeu, intervention)
+    #coup2 = postraitement_sans_user(dict_case_caracteres[i][1], jeu)
+    
+    if coup2 is None:
+        coup2 = ""
+
+    coups = f"{i}. " + coup1 + " " + coup2
+    liste_coups.append(coups)
+    total_coups += 2  # Incrémenter le nombre total de coups
+
+    with open('Liste_coups2_.txt', 'w') as fichier:
     # 3. Écrire chaque caractère dans le fichier
         for coup in liste_coups:
             fichier.write(coup + '\n')
 
+interventions_utilisateur = intervention.get_interventions()
+print(f"nb interventions : {interventions_utilisateur}")
+# Calcul de la proportion d'intervention de l'utilisateur
+if total_coups > 0:
+    proportion_intervention = (interventions_utilisateur / total_coups)*100
+    print(f"Proportion d'intervention de l'utilisateur : {proportion_intervention:.2f} %")
+else:
+    print("Aucun coup joué.")
 
+
+
+#print(f"{proportion_coups_traite_correct()} %")
 
 # closing all open windows 
 cv.destroyAllWindows()
+
+
+"""# Test code post_traitement
+liste_coups=post_traitement(dict_case_caracteres)
+with open('Liste_coups2_.txt', 'w') as fichier:
+    # 3. Écrire chaque caractère dans le fichier
+        for coup in liste_coups:
+            fichier.write(coup + '\n')"""
