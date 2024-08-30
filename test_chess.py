@@ -74,9 +74,9 @@ def tester_coups(coups):
     # Application des coups et affichage de la FEN après chaque cou
     for coup in coups:
         #print('moves possibles', jeu.legal_moves)
-        print('coup prédit :', coup)
+        #print('coup prédit :', coup)
         coups_possibles = list(map(jeu.san, jeu.legal_moves))
-        print('moves possibles', coups_possibles)
+        #print('moves possibles', coups_possibles)
         if coup in coups_possibles:
             jeu.push_san(coup)
             coups_corriges.append(coup)

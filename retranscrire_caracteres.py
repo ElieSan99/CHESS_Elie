@@ -174,7 +174,7 @@ def post_traitement(dict_caractere_joueur, jeu, intervention):
     def obtenir_top_prediction(res, n=5):
         """Retourne les indices des n prédictions avec les probas les plus élévées."""
         indices = np.argsort(res)[0][-n:]
-        print(f"indices {indices}")
+        #print(f"indices {indices}")
         return indices
     
 
@@ -197,7 +197,7 @@ def post_traitement(dict_caractere_joueur, jeu, intervention):
             print(f"Erreur lors du redimensionnement de l'image: {e}")
             return None
 
-        res = model.predict(image_to_predict)
+        res = model.predict(image_to_predict, verbose = 0)
         #print(f"probas {res}")
 
         # Obtenir les trois meilleures prédictions
@@ -216,7 +216,7 @@ def post_traitement(dict_caractere_joueur, jeu, intervention):
         coup = conversion_piece(coup)
     else:
         coup = coup.lower()
-        print(f"coup minuscule : {coup}")
+        #print(f"coup minuscule : {coup}")
         # Remplacer tout coup contenant "o" par "o-o"
         if 'o' in coup:
             coup = "O-O"
@@ -228,7 +228,7 @@ def post_traitement(dict_caractere_joueur, jeu, intervention):
 
      # Trouver la Liste des coups possibles
     coups_possibles = list(map(jeu.san, jeu.legal_moves))
-    print(f"coups possibles: {list(map(conversion_piece_inverse,coups_possibles))}")
+    #print(f"coups possibles: {list(map(conversion_piece_inverse,coups_possibles))}")
     
     
 
@@ -250,7 +250,7 @@ def post_traitement(dict_caractere_joueur, jeu, intervention):
                 candidat = coup[:i] + conversion[cle] + coup[i+1:]
                 candidats.append(conversion_piece(candidat))
     
-    print(f"candidats: {list(map(conversion_piece_inverse,candidats))}")
+    #print(f"candidats: {list(map(conversion_piece_inverse,candidats))}")
 
     # Calcul de la similarité basée sur la distance de Levenshtein
     similarites = []
